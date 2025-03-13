@@ -1,6 +1,6 @@
 ﻿namespace ConFinServer.Model
 {
-    public class ModelCidade
+    public class CidadeModel
     {
 
         public int Codigo { get; set; }

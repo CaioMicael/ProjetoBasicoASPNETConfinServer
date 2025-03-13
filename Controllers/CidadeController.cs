@@ -5,26 +5,26 @@ namespace ConFinServer.Controllers
 {
     [Route("api/controllerCidade")]
     [ApiController]
-    public class ControllerCidade : ControllerBase
+    public class CidadeController : ControllerBase
     {
-        private static ModelCidade ModelCidade = new ModelCidade();
-        private static List<ModelCidade> listaCidade = new List<ModelCidade>();
+        private static CidadeModel ModelCidade = new CidadeModel();
+        private static List<CidadeModel> listaCidade = new List<CidadeModel>();
 
         [HttpGet]
-        public List<ModelCidade> Listar()
+        public List<CidadeModel> Listar()
         {
             return listaCidade;
         }
 
         [HttpPost]
-        public string incluirCidade(ModelCidade ModelCidade )
+        public string incluirCidade(CidadeModel ModelCidade )
         {
             listaCidade.Add(ModelCidade);
             return "Cidade cadastrada com sucesso.";
         }
 
         [HttpPut]
-        public string alterarCidade(ModelCidade ModelCidade )
+        public string alterarCidade(CidadeModel ModelCidade )
         {
             var CidadeExiste = listaCidade.Where(lc => lc.Codigo == ModelCidade.Codigo).FirstOrDefault();
             if (CidadeExiste != null)
@@ -37,7 +37,7 @@ namespace ConFinServer.Controllers
         }
 
         [HttpDelete]
-        public string excluirCidade(ModelCidade ModelCidade)
+        public string excluirCidade(CidadeModel ModelCidade)
         {
             var CidadeExiste = listaCidade.Where(lc => lc.Codigo == ModelCidade.Codigo).FirstOrDefault();
             if (CidadeExiste != null)

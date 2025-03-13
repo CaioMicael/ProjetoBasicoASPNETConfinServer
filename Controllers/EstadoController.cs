@@ -1,5 +1,7 @@
-﻿using ConFinServer.Model;
+﻿using ConFin.Data;
+using ConFinServer.Model;
 using Microsoft.AspNetCore.Mvc;
+using System.Linq.Expressions;
 
 namespace ConFinServer.Controllers
 {
@@ -8,13 +10,27 @@ namespace ConFinServer.Controllers
 	public class EstadoController : ControllerBase
 	{
 		private static List<Estado> lista = new List<Estado>();
+        private readonly AppDbContext _context;
 		private static Estado estado = new Estado();
 
-		[HttpGet]
-		public string Estado()
+        /**
+         * <summary>
+         * Construtor da classe EstadoController
+         * </summary>
+         * <param name="context">Contexto do banco de dados</param>
+         */
+        public EstadoController(AppDbContext context)
+        {
+            this._context = context;
+        }
+
+
+        [HttpGet]
+		public List<Estado> GetEstado()
 		{
-			return estado.Sigla;
-		}
+            var lista = _context.Estado.OrderBy(E => E.Sigla).ToList();
+            return lista;
+        }
 
 		[HttpGet]
 		[Route("Lista")]
@@ -25,36 +41,60 @@ namespace ConFinServer.Controllers
 		}
 
 		[HttpPost]
-		public string PostEstado(Estado estado)
+		public IActionResult PostEstado(Estado estado)
 		{
-			lista.Add(estado);
-			return "Estado cadastrado com sucesso!";
+            try
+            {
+            _context.Estado.Add(estado);
+            _context.SaveChanges();
+			return Ok("Estado cadastrado com sucesso!");
+            }
+            catch (Exception e)
+            {
+                return BadRequest("Erro ao incluir o estado: " + e.Message);
+            }
 		}
 
 		[HttpPut]
-		public string PutEstado(Estado estado)
+		public IActionResult PutEstado([FromBody] Estado estado)
 		{
-			var EstadoExiste = lista.Where(l => l.Sigla == estado.Sigla).FirstOrDefault();
+			var EstadoExiste = _context.Estado.Where(l => l.Sigla == estado.Sigla).FirstOrDefault();
 			if (EstadoExiste != null)
 			{
+                try
+                {
 				EstadoExiste.Nome = estado.Nome;
-				return "Estado alterado com sucesso!";
+                _context.Estado.Update(EstadoExiste);
+                _context.SaveChanges();
+				return Ok("Estado alterado com sucesso!");
+                }
+                catch (Exception e)
+                {
+                    return BadRequest("Erro ao alterar o Estado: " + e.Message);
+                }
 			}
-            return "Estado não encontrado!";
+            return NotFound("Estado não encontrado!");
 		}
 
 		[HttpDelete]
-		public string DeleteEstado(Estado estado)
+		public IActionResult DeleteEstado(Estado estado)
 		{
-            var EstadoExiste = lista.Where(l => l.Sigla == estado.Sigla).FirstOrDefault();
+            var EstadoExiste = _context.Estado.Where(l => l.Sigla == estado.Sigla).FirstOrDefault();
             if (EstadoExiste != null)
             {
-				lista.Remove(EstadoExiste);
-                return "Estado excluído com sucesso!";
+                try {
+                _context.Estado.Remove(EstadoExiste);
+                _context.SaveChanges();
+                return Ok("Estado excluído com sucesso!");
+                }
+                catch (Exception e) {
+                    return BadRequest("Erro ao excluir o Estado: " + e.Message);
+                }
             }
-            return "Estado não encontrado!";
+            return NotFound("Estado não encontrado!");
         }
 
+        /*
 		[HttpDelete("ExcluirByQuery")]
 		public string DeleteEstadoByQuery([FromQuery] string sigla)
         {
@@ -89,6 +129,6 @@ namespace ConFinServer.Controllers
                 return "Estado excluído com sucesso!";
             }
             return "Estado não encontrado!";
-        }
+        }*/
     }
 }
