@@ -1,5 +1,7 @@
-﻿using ConFinServer.Model;
+﻿using ConFin.Data;
+using ConFinServer.Model;
 using Microsoft.AspNetCore.Mvc;
+using System;
 
 namespace ConFinServer.Controllers
 {
@@ -9,43 +11,93 @@ namespace ConFinServer.Controllers
     {
         private static CidadeModel ModelCidade = new CidadeModel();
         private static List<CidadeModel> listaCidade = new List<CidadeModel>();
+        private readonly AppDbContext _context;
+
+        /**
+         * <summary>
+         * Construtor da classe CidadeController
+         * </summary>
+         * <param name="context">Contexto do banco de dados</param>
+         */
+        public CidadeController(AppDbContext context)
+        {
+            this._context = context;
+        }
 
         [HttpGet]
         public List<CidadeModel> Listar()
         {
-            return listaCidade;
+            return _context.Cidade.OrderBy(C => C.Codigo).ToList();
         }
 
         [HttpPost]
-        public string incluirCidade(CidadeModel ModelCidade )
+        public IActionResult incluirCidade(CidadeModel ModelCidade )
         {
-            listaCidade.Add(ModelCidade);
-            return "Cidade cadastrada com sucesso.";
+            var Sigla = ModelCidade.Estado;
+            var EstadoExiste = _context.Estado.Where(lc => lc.Sigla == Sigla).FirstOrDefault();
+            if (EstadoExiste == null)
+            {
+                return NotFound("O estado informado não existe.");
+            }
+            try
+            {
+                _context.Cidade.Add(ModelCidade);
+                _context.SaveChanges();
+                return Ok("Cidade cadastrada com sucesso.");
+            }
+            catch (Exception e)
+            {
+                return BadRequest("Erro ao incluir a cidade: " + e.Message);
+            }
         }
 
         [HttpPut]
-        public string alterarCidade(CidadeModel ModelCidade )
+        public IActionResult alterarCidade(CidadeModel ModelCidade )
         {
-            var CidadeExiste = listaCidade.Where(lc => lc.Codigo == ModelCidade.Codigo).FirstOrDefault();
+            var Sigla = ModelCidade.Estado;
+            var CidadeExiste = _context.Cidade.Where(lc => lc.Codigo == ModelCidade.Codigo).FirstOrDefault();
+            var EstadoExiste = _context.Estado.Where(lc => lc.Sigla == Sigla).FirstOrDefault();
             if (CidadeExiste != null)
             {
+                if (EstadoExiste == null)
+                {
+                    return NotFound("O estado informado não existe.");
+                }
+                CidadeExiste.Codigo = ModelCidade.Codigo;
                 CidadeExiste.Nome   = ModelCidade.Nome;
                 CidadeExiste.Estado = ModelCidade.Estado;
-                return "A cidade de código " + CidadeExiste.Codigo + " Foi alterada com sucesso.";
+                try
+                {
+                    _context.Cidade.Update(CidadeExiste);
+                    _context.SaveChanges();
+                    return Ok("A cidade de código " + CidadeExiste.Codigo + " Foi alterada com sucesso.");
+                }
+                catch (Exception e)
+                {
+                    return BadRequest("Erro ao alterar a cidade: " + e.Message);
+                }
             }
-            return "Não encontramos a cidade código para alterar.";
+            return NotFound("Não encontramos a cidade para alterar.");
         }
 
         [HttpDelete]
-        public string excluirCidade(CidadeModel ModelCidade)
+        public IActionResult excluirCidade(CidadeModel CidadeModel)
         {
-            var CidadeExiste = listaCidade.Where(lc => lc.Codigo == ModelCidade.Codigo).FirstOrDefault();
+            var CidadeExiste = _context.Cidade.Where(lc => lc.Codigo == CidadeModel.Codigo).FirstOrDefault();
             if (CidadeExiste != null)
             {
-                listaCidade.Remove(CidadeExiste);
-                return "A cidade de código " + CidadeExiste.Codigo + " foi excluída com sucesso.";
+                try
+                {
+                    _context.Cidade.Remove(CidadeExiste);
+                    _context.SaveChanges();
+                    return Ok("A cidade de código " + CidadeExiste.Codigo + " foi excluída com sucesso.");
+                }
+                catch (Exception e)
+                {
+                    return BadRequest("Erro ao excluir a cidade: " + e.Message);
+                }
             }
-            return "Não encontramos a cidade código " + CidadeExiste.Codigo + " para excluir.";
+            return NotFound("Não encontramos a cidade para excluir.");
         }
     }
 }
